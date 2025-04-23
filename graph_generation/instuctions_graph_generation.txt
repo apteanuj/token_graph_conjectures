@@ -10,6 +10,36 @@ cd nauty2_8_9
 make 
 
 ##########################################
+Generating connected graphs in g6 format with nauty traces upto n=10 vertices
+
+chmod +x generate-connected.sh
+./generate-connected.sh ./graphs/unweighted
+
+Generating connected graphs on 3 vertices…
+>A ./nauty2_8_9/geng -cd1D2 n=3 e=2-3
+>Z 2 graphs generated in 0.00 sec
+Generating connected graphs on 4 vertices…
+>A ./nauty2_8_9/geng -cd1D3 n=4 e=3-6
+>Z 6 graphs generated in 0.00 sec
+Generating connected graphs on 5 vertices…
+>A ./nauty2_8_9/geng -cd1D4 n=5 e=4-10
+>Z 21 graphs generated in 0.00 sec
+Generating connected graphs on 6 vertices…
+>A ./nauty2_8_9/geng -cd1D5 n=6 e=5-15
+>Z 112 graphs generated in 0.00 sec
+Generating connected graphs on 7 vertices…
+>A ./nauty2_8_9/geng -cd1D6 n=7 e=6-21
+>Z 853 graphs generated in 0.00 sec
+Generating connected graphs on 8 vertices…
+>A ./nauty2_8_9/geng -cd1D7 n=8 e=7-28
+>Z 11117 graphs generated in 0.01 sec
+Generating connected graphs on 9 vertices…
+>A ./nauty2_8_9/geng -cd1D8 n=9 e=8-36
+>Z 261080 graphs generated in 0.10 sec
+Generating connected graphs on 10 vertices…
+>A ./nauty2_8_9/geng -cd1D9 n=10 e=9-45
+>Z 11716571 graphs generated in 3.81 sec
+##########################################
 Generating 2 vertex connected graphs in g6 format with nauty traces 
 
 chmod +x generate-2vc-odd.sh
