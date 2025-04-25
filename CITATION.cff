@@ -1,0 +1,16 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: "Apte"
+    given-names: "Anuj"
+  - family-names: "Marwaha"
+    given-names: "Kunal"
+  - family-names: "Lee"
+    given-names: "Eunou"
+  - family-names: "Parekh"
+    given-names: "Ojas"
+  - family-names: "Sud"
+    given-names: "James"
+url: "https://https://github.com/apteanuj/token_graph_conjectures"
+title: "Token Graph Conjecutures"
+date-released: 2025-05-31
