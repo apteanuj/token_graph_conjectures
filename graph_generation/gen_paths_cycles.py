@@ -46,7 +46,7 @@ def main():
         # Generate path graphs P_n for n from 3 to max_n
         for n in range(3, max_n + 1):
             G = nx.path_graph(n)
-            data = json_graph.node_link_data(G)
+            data = json_graph.node_link_data(G, edges="edges")
             data['n'] = n
             data['type'] = 'path'
             paths_f.write(json.dumps(data) + "\n")
@@ -54,7 +54,7 @@ def main():
         # Generate cycle graphs C_n for n from 3 to max_n
         for n in range(3, max_n + 1):
             G = nx.cycle_graph(n)
-            data = json_graph.node_link_data(G)
+            data = json_graph.node_link_data(G, edges="edges")
             data['n'] = n
             data['type'] = 'cycle'
             cycles_f.write(json.dumps(data) + "\n")

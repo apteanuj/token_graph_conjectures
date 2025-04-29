@@ -1,0 +1,102 @@
+####### Installing nauty traces ##########
+In a unix environment 
+Download tar ball from https://pallini.di.uniroma1.it/ 
+Consult https://manpages.ubuntu.com/manpages/jammy/man1/nauty-geng.1.html 
+#############
+cd graph_generation/
+tar xvzf nauty2_8_9.tar.gz
+cd nauty2_8_9
+./configure
+make 
+
+##########################################
+Generating connected graphs in g6 format with nauty traces upto n=10 vertices
+
+chmod +x generate-connected.sh
+./generate-connected.sh ./graphs/unweighted
+
+Generating connected graphs on 3 vertices…
+>A ./nauty2_8_9/geng -cd1D2 n=3 e=2-3
+>Z 2 graphs generated in 0.00 sec
+Generating connected graphs on 4 vertices…
+>A ./nauty2_8_9/geng -cd1D3 n=4 e=3-6
+>Z 6 graphs generated in 0.00 sec
+Generating connected graphs on 5 vertices…
+>A ./nauty2_8_9/geng -cd1D4 n=5 e=4-10
+>Z 21 graphs generated in 0.00 sec
+Generating connected graphs on 6 vertices…
+>A ./nauty2_8_9/geng -cd1D5 n=6 e=5-15
+>Z 112 graphs generated in 0.00 sec
+Generating connected graphs on 7 vertices…
+>A ./nauty2_8_9/geng -cd1D6 n=7 e=6-21
+>Z 853 graphs generated in 0.00 sec
+Generating connected graphs on 8 vertices…
+>A ./nauty2_8_9/geng -cd1D7 n=8 e=7-28
+>Z 11117 graphs generated in 0.01 sec
+Generating connected graphs on 9 vertices…
+>A ./nauty2_8_9/geng -cd1D8 n=9 e=8-36
+>Z 261080 graphs generated in 0.10 sec
+Generating connected graphs on 10 vertices…
+>A ./nauty2_8_9/geng -cd1D9 n=10 e=9-45
+>Z 11716571 graphs generated in 3.81 sec
+##########################################
+Generating 2 vertex connected graphs in g6 format with nauty traces 
+
+chmod +x generate-2vc-odd.sh
+./generate-2vc-odd.sh ./graphs/unweighted
+
+Generating 2-vertex-connected graphs on 3 vertices…
+>A ./nauty2_8_9/geng -Cd2D2 n=3 e=3
+>Z 1 graphs generated in 0.00 sec
+Generating 2-vertex-connected graphs on 5 vertices…
+>A ./nauty2_8_9/geng -Cd2D4 n=5 e=5-10
+>Z 10 graphs generated in 0.00 sec
+Generating 2-vertex-connected graphs on 7 vertices…
+>A ./nauty2_8_9/geng -Cd2D6 n=7 e=7-21
+>Z 468 graphs generated in 0.00 sec
+Generating 2-vertex-connected graphs on 9 vertices…
+>A ./nauty2_8_9/geng -Cd2D8 n=9 e=9-36
+>Z 194066 graphs generated in 0.12 sec
+Done. Files in ./graphs/unweighted/2vc:
+./graphs/unweighted/2vc/2vc_n_11.g6
+./graphs/unweighted/2vc/2vc_n_3.g6
+./graphs/unweighted/2vc/2vc_n_5.g6
+./graphs/unweighted/2vc/2vc_n_7.g6
+./graphs/unweighted/2vc/2vc_n_9.g6
+##########################################
+Filter out graphs which are not factor critical and store filtered ones in jsonl format
+
+source graph-env/bin/activate
+python3 filter_factor_critical.py ./graphs/unweighted/
+
+2vc_n_3.g6: 1 graphs read, 1 factor-critical written to fc_2vc_n_3.jsonl
+Processing ./graphs/unweighted/2vc_n_5.g6 …
+2vc_n_5.g6: 10 graphs read, 8 factor-critical written to fc_2vc_n_5.jsonl
+Processing ./graphs/unweighted/2vc_n_7.g6 …
+2vc_n_7.g6: 468 graphs read, 401 factor-critical written to fc_2vc_n_7.jsonl
+Processing ./graphs/unweighted/2vc_n_9.g6 …
+2vc_n_9.g6: 194066 graphs read, 181807 factor-critical written to fc_2vc_n_9.jsonl
+#########################################
+
+Generates exactly K connected Erdos–Renyi graphs for each n=3..10, with
+  • p ~ Uniform(0,1)
+  • edge weights w ~ Uniform(0,1)
+Stores them newline-delimited in:
+    OUTPUT_DIR/ER_n_3_to_10_{K}_per_n.jsonl
+Each line is a node-link JSON for one graph, with fields "n" and "p".
+
+python3 gen_er_graphs_uniform.py ./graphs/weighted 10000
+#####################################
+
+Generates exactly K complete graphs (K_n) for each n = 3..10, with edge weights drawn from three distributions:
+  • uniform(0,1)
+  • exponential with λ=1
+  • exponential with λ=10
+
+Produces three JSONL files in OUTPUT_DIR:
+  • complete_n_3_to_10_{K}_uniform.jsonl
+  • complete_n_3_to_10_{K}_exp1.jsonl
+  • complete_n_3_to_10_{K}_exp10.jsonl
+
+python3 gen_complete_graphs.py ./graphs/weighted 5000
+######################################

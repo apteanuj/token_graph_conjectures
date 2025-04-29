@@ -72,7 +72,7 @@ def main():
             G = nx.complete_graph(n)
             for dist in dists:
                 assign_weights(G, dist)
-                data = json_graph.node_link_data(G)
+                data = json_graph.node_link_data(G, edges="edges")
                 data['n'] = n
                 data['dist'] = dist
                 writers[dist].write(json.dumps(data) + "\n")

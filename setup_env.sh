@@ -1,34 +1,30 @@
 #!/usr/bin/env bash
 
 ENV_DIR="graph-env"
+ACTIVATE="$ENV_DIR/bin/activate"
 REQ_FILE="requirements.txt"
 
-if [ ! -d "$ENV_DIR" ]; then
-  echo "Virtual environment not found at '$ENV_DIR'. Creating..."
+if [ ! -f "$ACTIVATE" ]; then
+  echo "No valid virtualenv found in '$ENV_DIR'. Creating a new one…"
   python3 -m venv "$ENV_DIR"
-  echo "Created venv in '$ENV_DIR'."
+  echo "→ virtualenv created"
 
-  # Activate and install on first creation
+  # now activate and install
   # shellcheck source=/dev/null
-  source "$ENV_DIR/bin/activate"
-  echo "Activated venv: $(which python)"
+  source "$ACTIVATE"
+  echo "→ activated: $(which python)"
 
   pip install --upgrade pip
-
   if [ -f "$REQ_FILE" ]; then
-    echo "Installing dependencies from '$REQ_FILE'..."
+    echo "→ installing from $REQ_FILE"
     pip install -r "$REQ_FILE"
-    echo "Dependencies installed."
-  else
-    echo "No '$REQ_FILE' found; skipping pip install."
   fi
 else
-  echo "Virtual environment already exists at '$ENV_DIR'; skipping install steps."
-
-  # Just activate
+  echo "Valid virtualenv detected in '$ENV_DIR'. Skipping creation/install."
+  # just activate
   # shellcheck source=/dev/null
-  source "$ENV_DIR/bin/activate"
-  echo "Activated venv: $(which python)"
+  source "$ACTIVATE"
+  echo "→ activated: $VIRTUAL_ENV"
 fi
 
-echo "Environment setup complete."
+echo "Done."

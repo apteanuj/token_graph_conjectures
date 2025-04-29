@@ -5,7 +5,7 @@ filter_factor_critical.py
 Usage:
     ./filter_factor_critical.py /path/to/g6_dir
 
-For each file X.g6 in the directory, produces fc_X.jsonl containing
+For each file 2vc_n_*.g6 in the directory, produces fc_X.jsonl containing
 all factor-critical graphs (in node-link JSON, one per line), and prints counts.
 """
 
@@ -56,7 +56,7 @@ def process_file(g6_path: str):
             G = nx.from_graph6_bytes(s.encode('ascii'))
             if is_factor_critical(G):
                 fc_count += 1
-                data = json_graph.node_link_data(G)
+                data = json_graph.node_link_data(G, edges="edges")
                 fout.write(json.dumps(data) + "\n")
 
     print(f"{base}: {total} graphs read, {fc_count} factor-critical written to {out_name}")
@@ -73,7 +73,7 @@ def main():
         sys.exit(1)
 
     # glob is used here to find all .g6 files in the given directory
-    for g6_file in glob.glob(os.path.join(directory, '*.g6')):
+    for g6_file in glob.glob(os.path.join(directory, '2vc_n_*.g6')):
         print(f"Processing {g6_file} …")
         process_file(g6_file)
 

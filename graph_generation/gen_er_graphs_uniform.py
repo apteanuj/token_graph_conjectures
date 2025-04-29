@@ -40,7 +40,7 @@ def main():
                 for u, v in G.edges():
                     G[u][v]["weight"] = random.random()
                 # serialize
-                data = json_graph.node_link_data(G)
+                data = json_graph.node_link_data(G, edges="edges")
                 # data["n"] = n # optional meta-data
                 # data["p"] = p # optional meta-data 
                 fout.write(json.dumps(data) + "\n")

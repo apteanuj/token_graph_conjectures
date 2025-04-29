@@ -21,14 +21,14 @@ def read_graph_from_json(json_str: str) -> nx.Graph:
     Read a graph from a JSON string in node-link format.
     """
     data = json.loads(json_str)
-    return node_link_graph(data)
+    return node_link_graph(data, edges="edges")
 
 
 def save_graph_data_to_json(G: nx.Graph, filename: str) -> None:
     """
     Save graph G to a JSON file in node-link format.
     """
-    data = node_link_data(G)
+    data = node_link_data(G, edges="edges")
     with open(filename, 'w') as f:
         json.dump(data, f, indent=2)
 
@@ -148,9 +148,9 @@ def graph_data_all_k(G) -> Dict:
     n        = G.number_of_nodes()
     max_k    = (n) // 2
 
-    # graph-level metrics
+    # graph-level metrics 
     summary  = {
-        "graph":   node_link_data(G),          # topology + weights
+        "graph":   node_link_data(G, edges="edges"),          # topology + weights
         "graph_invariants": graph_invariant_data(G),        # W, C, M
         "k_data":  {}
     }
