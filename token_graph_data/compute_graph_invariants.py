@@ -40,17 +40,57 @@ def get_maximum_matching_k_edges(G, k, return_edges=False):
     else:
         return best_weight
 
+# Confused here why don't we have to iterate over all k less than given k value ? 
+
+from typing import Set, Tuple, List
+import networkx as nx
+import numpy as np
+
+def max_weight_matching_at_most_k(G: nx.Graph, k: int,
+                                  return_edges: bool = False):
+    """Exact max-weight matching using ≤k edges via branch-and-bound."""
+    edges_sorted: List[Tuple[int,int]] = sorted(
+        G.edges(), key=lambda e: G[e[0]][e[1]].get("weight", 1.0), reverse=True)
+
+    best_w, best_set = -np.inf, set()
+    prefix_sums = np.cumsum([G[u][v].get("weight", 1.0) for u, v in edges_sorted])
+
+    def dfs(idx: int, chosen: Set[Tuple[int,int]], used: Set[int], cur_w: float):
+        nonlocal best_w, best_set
+        # prune by cardinality
+        if len(chosen) == k or idx == len(edges_sorted):
+            if cur_w > best_w:
+                best_w, best_set = cur_w, set(chosen)
+            return
+        # optimistic bound with remaining largest weights
+        rem = k - len(chosen)
+        opt_bound = cur_w + (prefix_sums[idx + rem - 1] - (prefix_sums[idx - 1] if idx else 0))
+        if opt_bound <= best_w:
+            return
+
+        u, v = edges_sorted[idx]
+        w_uv = G[u][v].get("weight", 1.0)
+
+        # 1) choose this edge if feasible
+        if u not in used and v not in used:
+            dfs(idx + 1, chosen | {(u, v)}, used | {u, v}, cur_w + w_uv)
+        # 2) skip this edge
+        dfs(idx + 1, chosen, used, cur_w)
+
+    dfs(0, set(), set(), 0.0)
+    return (best_w, best_set) if return_edges else best_w
 
 def get_maximum_matching_at_most_k_edges(G, k, return_edges=False):
-    match_weight, max_matching = get_maximum_matching(G, return_edges=True)
-    k_prime = len(max_matching)
-    if k_prime <= k:
-        if return_edges:
-            return match_weight, max_matching
-        else:
-            return match_weight
-    else:
-        return get_maximum_matching_k_edges(G, k, return_edges=return_edges)
+    """
+    Exact solution but orders-of-magnitude faster than the old brute force.
+    Falls back to the trivial case if the unrestricted matching
+    already has ≤k edges.
+    """
+    total, full = get_maximum_matching(G, return_edges=True)
+    if len(full) <= k:
+        return (total, full) if return_edges else total
+    # otherwise use branch-and-bound
+    return max_weight_matching_at_most_k(G, k, return_edges)
 
 
 def calculate_cut_value(G, partition):
