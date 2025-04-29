@@ -10,7 +10,7 @@ REPO_ROOT="$(dirname "$SCRIPT_DIR")"
 # Python script path
 PY_SCRIPT="$SCRIPT_DIR/parallel_compute_data.py"
 
-for TYPE in weighted unighted; do
+for TYPE in weighted unweighted; do
   INPUT_DIR="$REPO_ROOT/graph_generation/graphs/$TYPE"
   OUTPUT_DIR="$SCRIPT_DIR/data/$TYPE"
 
