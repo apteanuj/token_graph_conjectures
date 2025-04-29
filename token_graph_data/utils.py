@@ -162,8 +162,3 @@ def graph_data_all_k(G) -> Dict:
         summary["k_data"][k] = k_dict
 
     return summary
-
-# G = nx.star_graph(8)
-# nx.set_edge_attributes(G, 1.0, "weight")      # unit weights
-# result = graph_data_all_k(G)
-# print(result)
