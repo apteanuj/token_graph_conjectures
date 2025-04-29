@@ -1,0 +1,31 @@
+## Usage
+Run the script using:
+
+### Arguments
+- `INPUT_FILE`: Path to the input graph file (G6 or JSONL format)
+
+### Options
+- `--output_dir`, `-o`: Output directory (default: same as input)
+- `--workers`, `-w`: Number of worker processes (default: all CPU cores)
+- `--batch_size`, `-b`: Number of graphs to process in each batch (default: 1000)
+
+### Example
+python3 parallel_compute_data.py ~/token_graph_conjectures/graph_generation/graphs/unweighted/fc_2vc_n_7.jsonl --output_dir ./data/unweighted/ --workers 6 --ba
+tch_size 500
+Counting total graphs in file...
+Found 401 total graphs, will process in approximately 1 batches
+Batch 1/1: 401/401 graphs, total: 401/401: 100%|███████████████████████████████████████| 1/1 [00:02<00:00,  2.81s/batch]
+All done! Processed 401 graphs across 1 batches.
+Results written to data/unweighted/fc_2vc_n_7_data.jsonl
+
+
+## Output
+The output is a JSONL file where each line contains a JSON object with:
+- Graph structure
+- Basic graph invariants (W, C, M)
+- k-dependent invariants for each k (M_le_k, C_k, spectral data)
+
+## Memory Usage
+For large files with millions of graphs, consider:
+- Reducing batch size (100-500) if memory is limited
+- Increasing workers if you have many CPU cores available
