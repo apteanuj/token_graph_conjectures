@@ -30,7 +30,7 @@ def stream_results_in_batches(filename, batch_size):
         if batch:
             yield batch
 
-def test_conjectures(data):
+def test_conjectures(data, worst_case_approx_dict=None, output_filename='failing_conjecture_graphs.jsonl'):
     """
     Test conjectures for token graphs. Print failures and store failing graphs with reasons.
     """
@@ -38,6 +38,7 @@ def test_conjectures(data):
     n = len(data['graph']['nodes'])
     prev_Lk_max, prev_Qk_max, prev_Ak_max, prev_nAk_max = -np.inf, -np.inf, -np.inf, -np.inf
     L_max, A_max, nA_max = -np.inf, -np.inf, -np.inf
+    prev_Mk, prev_Ck = 0, 0
     failing_conjectures = []
 
     for k in range(1, n // 2 + 1):
@@ -46,9 +47,11 @@ def test_conjectures(data):
         Lk_max = data['k_data'][str(k)]['spec']['L']['max']
         Qk_max = data['k_data'][str(k)]['spec']['Q']['max']
         Mk = data['k_data'][str(k)]['M_le_k'] 
+        Ck = data['k_data'][str(k)]['C_k']
 
         conditions = [
             (Lk_max <= (W + C) / 2 + Mk + TOL, f"Lk <= (W+C)/2+Mk failed at k={k}."),
+            (Lk_max <= W + Mk + TOL, f"Lk <= W+Mk failed at k={k}."),
             (Qk_max <= W + Mk + TOL, f"Qk <= W+Mk failed at k={k}."),
             (nAk_max <= C / 2 + Mk / 2 + TOL, f" -Ak <= C/2+Mk/2 failed at k={k}."),
             (Ak_max <= W / 2 + Mk / 2 + TOL, f"Ak <= W/2+Mk/2 failed at k={k}."),
@@ -64,27 +67,24 @@ def test_conjectures(data):
         L_max, A_max, nA_max = max(L_max, Lk_max), max(A_max, Ak_max), max(nA_max, nAk_max)
         prev_Lk_max, prev_Qk_max, prev_Ak_max, prev_nAk_max = Lk_max, Qk_max, Ak_max, nAk_max
 
-    # Graph-level checks
+    # track worst case approximations
     match_energy_qmc = (3 * M + W) / 2
-    match_energy_xy = M
+    match_energy_xy = M + W/2
     cut_energy_qmc = C
-    cut_energy_xy = C - W / 2
-    xy_max, xy_min = nA_max, -A_max
-
-    conditions = [
-        (max(match_energy_qmc, cut_energy_qmc) / L_max >= 3 / 4 - TOL, "QMC ALG/OPT>=3/4 failed"),
-        ((max(match_energy_xy, cut_energy_xy) - xy_min) / (xy_max - xy_min) >= 3 / 4 - TOL, "XY ALG/OPT>=3/4 failed"),
-    ]
-
-    for condition, message in conditions:
-        if not condition:
-            print(message)
-            failing_conjectures.append(message)
-
+    cut_energy_xy =C 
+    xy_max, xy_min = nA_max+W/2, -A_max+W/2
+    if worst_case_approx_dict is not None:
+        worst_case_approx_dict['QMC_max(MATCH,CUT)/OPT'] = min(worst_case_approx_dict['QMC_max(MATCH,CUT)/OPT'], max(match_energy_qmc, cut_energy_qmc)/L_max)
+        worst_case_approx_dict['QMC_max(MATCH,.956*CUT)/OPT'] = min(worst_case_approx_dict['QMC_max(MATCH,.956*CUT)/OPT'], max(match_energy_qmc, .956*cut_energy_qmc)/L_max)
+        worst_case_approx_dict['XY_max(MATCH,CUT)/OPT'] = min(worst_case_approx_dict['XY_max(MATCH,CUT)/OPT'], max(match_energy_xy, cut_energy_xy) / xy_max)
+        worst_case_approx_dict['XY_max(MATCH,.935*CUT)/OPT'] = min(worst_case_approx_dict['XY_max(MATCH,.935*CUT)/OPT'], max(match_energy_xy, .9349*cut_energy_xy) /xy_max)
+        worst_case_approx_dict['XY_max(MATCH,CUT)_apx'] = min(worst_case_approx_dict['XY_max(MATCH,CUT)_apx'], (max(match_energy_xy, cut_energy_xy) - xy_min) / (xy_max - xy_min))
+        worst_case_approx_dict['XY_max(MATCH,.935*CUT)_apx'] = min(worst_case_approx_dict['XY_max(MATCH,.935*CUT)_apx'], (max(match_energy_xy, .9349*cut_energy_xy) - xy_min) / (xy_max - xy_min))
+    
     # Save failing data if any conjectures failed
     if failing_conjectures:
         data['failing_conjectures'] = failing_conjectures
-        with open('failing_graphs.jsonl', 'a') as f:
+        with open(output_filename, 'a') as f:
             f.write(jsonpickle.encode(data) + "\n")
 
 def safe_tarinfo_filter(tarinfo, path):
@@ -142,7 +142,11 @@ def concatenate_split_parts(part_files, output_path):
                 shutil.copyfileobj(infile, outfile)
 
 
-def run_all_conjecture_tests(root='token_graph_data/data', batch_size=100):
+def run_all_conjecture_tests(root='token_graph_data/data', 
+                             batch_size=100, 
+                             output_filename='failing_conjecture_graphs.jsonl', 
+                             process_tarred_files=True
+                             ):
     """
     Recursively runs test_conjectures on all .jsonl files found under the root directory.
     - Handles both regular and nested subdirectories.
@@ -153,34 +157,50 @@ def run_all_conjecture_tests(root='token_graph_data/data', batch_size=100):
     Parameters:
     - root: str - root directory to start searching
     - batch_size: int - batch size to use with stream_results_in_batches
+    - output_filename: str - file to write failing conjectures to
+    - process_tarred_files: bool - whether to process tarred files (bigger files leads to heavier computation)
     """
+    worst_case_approx_dict = {
+        'QMC_max(MATCH,CUT)/OPT': 1,
+        'QMC_max(MATCH,.956*CUT)/OPT': 1,
+        'XY_max(MATCH,CUT)/OPT': 1,
+        'XY_max(MATCH,.935*CUT)/OPT': 1,
+        'XY_max(MATCH,CUT)_apx': 1,
+        'XY_max(MATCH,.935*CUT)_apx': 1,
+    }
     # keep track of extracted jsonl files and combined tar files to delete later (maintains directory size for github)
     extracted_jsonl_files = set()
     combined_tar_files = set()
 
+    # delete the output file if it exists
+    if os.path.exists(output_filename):
+        os.remove(output_filename)
+
+    # walk through the directory tree
     for dirpath, dirnames, filenames in os.walk(root):
         filenames = sorted(filenames)
         part_pattern = re.compile(r'(.*\.tar\.gz)\.part\d+\.part')
         grouped_parts = {}
 
-        for filename in filenames:
-            match = part_pattern.match(filename)
-            if match:
-                base = match.group(1)
-                grouped_parts.setdefault(base, []).append(os.path.join(dirpath, filename))
+        if process_tarred_files:
+            for filename in filenames:
+                match = part_pattern.match(filename)
+                if match:
+                    base = match.group(1)
+                    grouped_parts.setdefault(base, []).append(os.path.join(dirpath, filename))
 
-        for base, parts in grouped_parts.items():
-            combined_path = os.path.join(dirpath, os.path.basename(base))
-            concatenate_split_parts(parts, combined_path)
-            combined_tar_files.add(combined_path)
-            extracted = untar_file(combined_path, dirpath)
-            extracted_jsonl_files.update(extracted)
-
-        for filename in filenames:
-            if filename.endswith('.tar.gz') and not part_pattern.match(filename):
-                tar_path = os.path.join(dirpath, filename)
-                extracted = untar_file(tar_path, dirpath)
+            for base, parts in grouped_parts.items():
+                combined_path = os.path.join(dirpath, os.path.basename(base))
+                concatenate_split_parts(parts, combined_path)
+                combined_tar_files.add(combined_path)
+                extracted = untar_file(combined_path, dirpath)
                 extracted_jsonl_files.update(extracted)
+
+            for filename in filenames:
+                if filename.endswith('.tar.gz') and not part_pattern.match(filename):
+                    tar_path = os.path.join(dirpath, filename)
+                    extracted = untar_file(tar_path, dirpath)
+                    extracted_jsonl_files.update(extracted)
 
         for filename in os.listdir(dirpath):
             if filename.endswith('.jsonl'):
@@ -193,11 +213,20 @@ def run_all_conjecture_tests(root='token_graph_data/data', batch_size=100):
                                       total=total_lines // batch_size,
                                       desc=f"Processing {filepath}"):
                         for data in batch:
-                            test_conjectures(data)
+                            test_conjectures(data, worst_case_approx_dict=worst_case_approx_dict, output_filename=output_filename)
 
                 except Exception as e:
                     print(f"Error processing {filepath}: {e}")
 
+    # delete worst_case_approx.json if it exists
+    if os.path.exists('worst_case_approx.json'):
+        os.remove('worst_case_approx.json')
+    # save worst_case_approx_dict to json
+    with open('worst_case_approx.json', 'w') as f:
+        json_str = jsonpickle.encode(worst_case_approx_dict)  # Get the JSON string
+        f.write(json_str)
+    
+    # Clean up extracted files and combined tar files
     for jsonl_path in extracted_jsonl_files:
         if os.path.exists(jsonl_path):
             print(f"Deleting extracted file: {jsonl_path}")
@@ -209,4 +238,4 @@ def run_all_conjecture_tests(root='token_graph_data/data', batch_size=100):
 
 if __name__ == '__main__':
     run_all_conjecture_tests()
-    print("Success!")
+    print("Completed")
