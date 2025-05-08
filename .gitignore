@@ -1,3 +1,4 @@
 # Ignore virtual environments
 graph-env/
 trash/
+token_graph_data/trash
